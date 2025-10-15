@@ -1,178 +1,163 @@
-const client = require('../config/database');
-const validator = require('validator');
-const { v4: uuidv4 } = require('uuid');
+const { client } = require('../config/database');
 
-exports.dangKyCCCD = async (req, res) => {
-  const { so_cccd, ho_ten, ngay_sinh, gioi_tinh, quoc_tich, que_quan, tinh, huyen, xa } = req.body;
-  
-  if (!validator.isLength(so_cccd, { min: 12, max: 12 })) {
-    return res.status(400).json({ error: 'SO_CCCD phải có 12 số' });
-  }
-  if (!['Nam', 'Nữ'].includes(gioi_tinh)) {
-    return res.status(400).json({ error: 'Giới tính không hợp lệ' });
-  }
-
-  const queryCheck = 'SELECT so_cccd FROM CONG_DAN WHERE so_cccd = ?';
-  const queryInsert = 'INSERT INTO CONG_DAN (so_cccd, ho_ten, ngay_sinh, gioi_tinh, quoc_tich, que_quan, tinh, huyen, xa, trang_thai) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
-  const queryInsertByTinh = 'INSERT INTO CONG_DAN_BY_TINH (tinh, so_cccd, ho_ten) VALUES (?, ?, ?)';
-  
+// Tất cả câu truy vấn đã được đổi sang chữ thường
+const getAllCongDan = async (req, res) => {
   try {
-    const check = await client.execute(queryCheck, [so_cccd], { prepare: true });
-    if (check.rows.length > 0) {
-      return res.status(400).json({ error: 'SO_CCCD đã tồn tại' });
+    const result = await client.execute('SELECT * FROM cong_dan');
+    res.json(result.rows);
+  } catch (error) {
+    res.status(500).json({ message: 'Lỗi hệ thống', error: error.message });
+  }
+};
+
+const getCongDanById = async (req, res) => {
+  const { id } = req.params;
+  try {
+    const result = await client.execute('SELECT * FROM cong_dan WHERE so_cccd = ?', [id]);
+    if (result.rowLength > 0) {
+      res.json(result.rows[0]);
+    } else {
+      res.status(404).json({ message: 'Không tìm thấy công dân' });
     }
-    
-    await client.execute(queryInsert, [so_cccd, ho_ten, ngay_sinh, gioi_tinh, quoc_tich, que_quan, tinh, huyen, xa, 'Hợp lệ'], { prepare: true });
-    await client.execute(queryInsertByTinh, [tinh, so_cccd, ho_ten], { prepare: true });
-    res.status(201).json({ message: 'Đăng ký CCCD thành công' });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
+  } catch (error) {
+    res.status(500).json({ message: 'Lỗi hệ thống', error: error.message });
   }
 };
 
-exports.xemThongTinCCCD = async (req, res) => {
-  const { so_cccd } = req.params;
-  
-  const query = 'SELECT * FROM CONG_DAN WHERE so_cccd = ?';
+const createCongDan = async (req, res) => {
+  const { SO_CCCD, HO_TEN, NGAY_SINH, NAM_SINH, QUE_QUAN, GIOI_TINH, DIA_CHI_THUONG_TRU, TINH, PHUONG, NGHE_NGHIEP, TINH_TRANG_HON_NHAN, SO_DIEN_THOAI, TRANG_THAI_CCCD } = req.body;
   try {
-    const result = await client.execute(query, [so_cccd], { prepare: true });
-    if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Không tìm thấy công dân' });
+    const query = 'INSERT INTO cong_dan (so_cccd, ho_ten, ngay_sinh, nam_sinh, que_quan, gioi_tinh, dia_chi_thuong_tru, tinh, phuong, nghe_nghiep, tinh_trang_hon_nhan, so_dien_thoai, trang_thai_cccd) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
+    await client.execute(query, [SO_CCCD, HO_TEN, NGAY_SINH, NAM_SINH, QUE_QUAN, GIOI_TINH, DIA_CHI_THUONG_TRU, TINH, PHUONG, NGHE_NGHIEP, TINH_TRANG_HON_NHAN, SO_DIEN_THOAI, TRANG_THAI_CCCD], { prepare: true });
+    res.status(201).json({ message: 'Tạo công dân thành công' });
+  } catch (error) {
+    res.status(500).json({ message: 'Lỗi hệ thống', error: error.message });
+  }
+};
+
+const updateCongDan = async (req, res) => {
+    const { id } = req.params;
+    const { HO_TEN, NGAY_SINH, NAM_SINH, QUE_QUAN, GIOI_TINH, DIA_CHI_THUONG_TRU, TINH, PHUONG, NGHE_NGHIEP, TINH_TRANG_HON_NHAN, SO_DIEN_THOAI, TRANG_THAI_CCCD } = req.body;
+    try {
+        const query = 'UPDATE cong_dan SET ho_ten = ?, ngay_sinh = ?, nam_sinh = ?, que_quan = ?, gioi_tinh = ?, dia_chi_thuong_tru = ?, tinh = ?, phuong = ?, nghe_nghiep = ?, tinh_trang_hon_nhan = ?, so_dien_thoai = ?, trang_thai_cccd = ? WHERE so_cccd = ?';
+        await client.execute(query, [HO_TEN, NGAY_SINH, NAM_SINH, QUE_QUAN, GIOI_TINH, DIA_CHI_THUONG_TRU, TINH, PHUONG, NGHE_NGHIEP, TINH_TRANG_HON_NHAN, SO_DIEN_THOAI, TRANG_THAI_CCCD, id], { prepare: true });
+        res.json({ message: 'Cập nhật thông tin công dân thành công' });
+    } catch (error) {
+        res.status(500).json({ message: 'Lỗi hệ thống', error: error.message });
     }
-    res.json(result.rows[0]);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
 };
 
-exports.capNhatThongTin = async (req, res) => {
-  const { so_cccd } = req.params;
-  const { ho_ten, ngay_sinh, gioi_tinh, quoc_tich, que_quan, tinh, huyen, xa } = req.body;
-  
-  const queryUpdate = 'UPDATE CONG_DAN SET ho_ten = ?, ngay_sinh = ?, gioi_tinh = ?, quoc_tich = ?, que_quan = ?, tinh = ?, huyen = ?, xa = ? WHERE so_cccd = ?';
-  const queryUpdateByTinh = 'UPDATE CONG_DAN_BY_TINH SET ho_ten = ?, tinh = ? WHERE so_cccd = ?';
-  
-  try {
-    await client.execute(queryUpdate, [ho_ten, ngay_sinh, gioi_tinh, quoc_tich, que_quan, tinh, huyen, xa, so_cccd], { prepare: true });
-    await client.execute(queryUpdateByTinh, [ho_ten, tinh, so_cccd], { prepare: true });
-    res.json({ message: 'Cập nhật thông tin thành công' });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-};
-
-exports.xuLyLamLaiMat = async (req, res) => {
-  const { so_cccd } = req.params;
-  const { trang_thai } = req.body;
-  
-  const query = 'UPDATE CONG_DAN SET trang_thai = ? WHERE so_cccd = ?';
-  try {
-    await client.execute(query, [trang_thai, so_cccd], { prepare: true });
-    res.json({ message: 'Cập nhật trạng thái CCCD thành công' });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-};
-
-exports.timKiemCongDan = async (req, res) => {
-    const { searchType, searchValue } = req.query;
-
-    if (!searchType || !searchValue) {
-        // Mặc định trả về danh sách 10 công dân đầu tiên nếu không có tham số
-        const defaultQuery = 'SELECT so_cccd, ho_ten, ngay_sinh, gioi_tinh, tinh FROM CONG_DAN LIMIT 10';
-        try {
-            const result = await client.execute(defaultQuery, [], { prepare: true });
-            return res.json(result.rows);
-        } catch (err) {
-            console.error('Lỗi lấy danh sách mặc định:', err);
-            return res.status(500).json({ error: 'Lỗi truy vấn CSDL.' });
-        }
+const deleteCongDan = async (req, res) => {
+    const { id } = req.params;
+    try {
+        await client.execute('DELETE FROM cong_dan WHERE so_cccd = ?', [id]);
+        res.json({ message: 'Xóa công dân thành công' });
+    } catch (error) {
+        res.status(500).json({ message: 'Lỗi hệ thống', error: error.message });
     }
+};
 
-    let query = '';
-    let params = [];
-
-    // Xây dựng câu lệnh query dựa trên searchType
-    switch (searchType) {
-        case 'so_cccd':
-            // Tìm kiếm chính xác trên Primary Key là nhanh nhất
-            query = 'SELECT * FROM CONG_DAN WHERE so_cccd = ?';
-            params.push(searchValue);
-            break;
-        case 'ho_ten':
-            // Tìm kiếm trên secondary index, Cassandra không hỗ trợ LIKE, 
-            // nên ta sẽ tìm chính xác hoặc phải dùng giải pháp khác (vd: Elaticsearch)
-            // Tạm thời ở đây ta tìm kiếm chính xác
-            query = 'SELECT * FROM CONG_DAN WHERE ho_ten = ? ALLOW FILTERING';
-            params.push(searchValue);
-            break;
-        case 'nam_sinh':
-            // Tìm kiếm trên secondary index
-            query = 'SELECT * FROM CONG_DAN WHERE nam_sinh = ? ALLOW FILTERING';
-            // Cần chuyển đổi searchValue sang kiểu INT
-            const namSinh = parseInt(searchValue, 10);
-            if (isNaN(namSinh)) {
-                return res.status(400).json({ error: 'Năm sinh phải là một con số.' });
-            }
-            params.push(namSinh);
-            break;
-        case 'tinh':
-            // Tìm kiếm trên secondary index
-            query = 'SELECT * FROM CONG_DAN WHERE tinh = ? ALLOW FILTERING';
-            params.push(searchValue);
-            break;
-        case 'gioi_tinh':
-            // Tìm kiếm trên secondary index
-            query = 'SELECT * FROM CONG_DAN WHERE gioi_tinh = ? ALLOW FILTERING';
-            params.push(searchValue);
-            break;
-        default:
-            return res.status(400).json({ error: 'Loại tìm kiếm không hợp lệ.' });
+const searchCongDan = async (req, res) => {
+    const { term } = req.query;
+    if (!term) {
+        return res.status(400).json({ message: 'Vui lòng nhập từ khóa tìm kiếm.' });
     }
 
     try {
-        const result = await client.execute(query, params, { prepare: true });
-        if (result.rowLength === 0) {
-            return res.status(404).json({ message: 'Không tìm thấy công dân nào phù hợp.' });
+        // Ưu tiên tìm kiếm theo Số CCCD trước (vì đây là khóa chính, rất nhanh)
+        const queryById = 'SELECT * FROM cong_dan WHERE so_cccd = ?';
+        const resultById = await client.execute(queryById, [term], { prepare: true });
+
+        if (resultById.rowLength > 0) {
+            // Nếu tìm thấy bằng CCCD, trả về kết quả ngay lập tức
+            return res.json(resultById.rows);
         }
-        res.json(result.rows);
-    } catch (err) {
-        console.error(`Lỗi khi tìm kiếm theo ${searchType}:`, err);
-        res.status(500).json({ error: 'Đã xảy ra lỗi trong quá trình tìm kiếm.' });
+
+        // Nếu không tìm thấy bằng CCCD, tiếp tục tìm kiếm theo Họ Tên
+        const queryByName = "SELECT * FROM cong_dan WHERE ho_ten LIKE ? ALLOW FILTERING";
+        const resultByName = await client.execute(queryByName, ['%' + term + '%'], { prepare: true });
+
+        if (resultByName.rowLength > 0) {
+            return res.json(resultByName.rows);
+        }
+
+        res.json([]); // Trả về một mảng rỗng nếu không tìm thấy kết quả 
+
+    } catch (error) {
+        console.error("Lỗi khi tìm kiếm công dân:", error);
+        res.status(500).json({ message: 'Lỗi hệ thống', error: error.message });
     }
 };
 
-exports.thongKeDanCu = async (req, res) => {
-  try {
-    // Total citizens
-    const totalQuery = 'SELECT COUNT(*) AS count FROM CONG_DAN';
-    const totalResult = await client.execute(totalQuery, [], { prepare: true });
-    const totalCitizens = Number(totalResult.rows[0].count);
-    console.log('Total citizens:', totalCitizens);
+// Thống kê theo giới tính 
+const thongKeTheoGioiTinh = async (req, res) => {
+    try {
+        const result = await client.execute('SELECT gioi_tinh FROM cong_dan');
+        const thongKe = {};
+        result.rows.forEach(row => {
+            const gioiTinh = row.gioi_tinh;
+            if (gioiTinh) {
+                thongKe[gioiTinh] = (thongKe[gioiTinh] || 0) + 1;
+            }
+        });
+        const formattedResult = Object.entries(thongKe).map(([key, value]) => ({
+            gioi_tinh: key,
+            so_luong: value
+        }));
+        res.json(formattedResult);
+    } catch (error) {
+        res.status(500).json({ message: 'Lỗi hệ thống', error: error.message });
+    }
+};
 
-    // Citizens by province
-    const provinceQuery = 'SELECT tinh, COUNT(*) AS count FROM CONG_DAN_BY_TINH GROUP BY tinh';
-    const provinceResult = await client.execute(provinceQuery, [], { prepare: true });
-    const citizensByProvince = provinceResult.rows.map(row => ({
-      tinh: row.tinh,
-      count: Number(row.count)
-    }));
-    console.log('Citizens by province:', citizensByProvince);
+// Thống kê theo độ tuổi 
+const thongKeTheoDoTuoi = async (req, res) => {
+    try {
+        const result = await client.execute('SELECT nam_sinh FROM cong_dan');
+        const namHienTai = new Date().getFullYear();
+        const thongKe = { 'Duoi 18': 0, '18-30': 0, '31-50': 0, 'Tren 50': 0 };
+        result.rows.forEach(row => {
+            const tuoi = namHienTai - row.nam_sinh;
+            if (tuoi < 18) thongKe['Duoi 18']++;
+            else if (tuoi <= 30) thongKe['18-30']++;
+            else if (tuoi <= 50) thongKe['31-50']++;
+            else thongKe['Tren 50']++;
+        });
+        res.json(thongKe);
+    } catch (error) {
+        res.status(500).json({ message: 'Lỗi hệ thống', error: error.message });
+    }
+};
 
-    // Marital status
-    const marriedQuery = 'SELECT COUNT(*) AS count FROM KET_HON';
-    const marriedResult = await client.execute(marriedQuery, [], { prepare: true });
-    const marriedCount = Number(marriedResult.rows[0].count);
-    const singleCount = totalCitizens - marriedCount;
-    console.log('Married count:', marriedCount, 'Single count:', singleCount);
+// Thống kê theo tình trạng hôn nhân 
+const thongKeTheoTinhTrangHonNhan = async (req, res) => {
+    try {
+        const result = await client.execute('SELECT tinh_trang_hon_nhan FROM cong_dan');
+        const thongKe = {};
+        result.rows.forEach(row => {
+            const honNhan = row.tinh_trang_hon_nhan;
+            if (honNhan) {
+                thongKe[honNhan] = (thongKe[honNhan] || 0) + 1;
+            }
+        });
+        const formattedResult = Object.entries(thongKe).map(([key, value]) => ({
+            tinh_trang_hon_nhan: key,
+            so_luong: value
+        }));
+        res.json(formattedResult);
+    } catch (error) {
+        res.status(500).json({ message: 'Lỗi hệ thống', error: error.message });
+    }
+};
 
-    res.json({
-      total_citizens: totalCitizens,
-      citizens_by_province: citizensByProvince,
-      marital_status: { married: marriedCount, single: singleCount }
-    });
-  } catch (err) {
-    console.error('Error in thongKeDanCu:', err);
-    res.status(500).json({ error: err.message });
-  }
+module.exports = {
+  getAllCongDan,
+  getCongDanById,
+  createCongDan,
+  updateCongDan,
+  deleteCongDan,
+  searchCongDan,
+  thongKeTheoGioiTinh,
+  thongKeTheoDoTuoi,
+  thongKeTheoTinhTrangHonNhan
 };

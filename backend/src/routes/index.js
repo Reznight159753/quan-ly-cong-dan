@@ -1,51 +1,56 @@
 const express = require('express');
-const congDanController = require('../controllers/congDanController');
-const ketHonController = require('../controllers/ketHonController');
-const xeController = require('../controllers/xeController');
-const truController = require('../controllers/truController');
-const giayToController = require('../controllers/giayToController');
-const hoKhauController = require('../controllers/hoKhauController');
-const taiKhoanController = require('../controllers/taiKhoanController');
-
 const router = express.Router();
 
-// Tài khoản
-router.post('/taikhoan/dangky', taiKhoanController.dangKyTaiKhoan);
-router.post('/taikhoan/dangky-admin', taiKhoanController.dangKyTaiKhoanAdmin);
-router.post('/taikhoan/dangnhap', taiKhoanController.dangNhap);
+const congDanController = require('../controllers/congDanController');
+const taiKhoanController = require('../controllers/taiKhoanController');
+const hoKhauController = require('../controllers/hoKhauController');
+const truController = require('../controllers/truController');
+const xeController = require('../controllers/xeController');
+const giayToController = require('../controllers/giayToController');
+const ketHonController = require('../controllers/ketHonController');
+const lyHonController = require('../controllers/lyHonController');
+const khaiSinhController = require('../controllers/khaiSinhController');
 
 // Công dân
-router.post('/congdan/dangky', congDanController.dangKyCCCD);
-router.get('/congdan/:so_cccd', congDanController.xemThongTinCCCD);
-router.put('/congdan/:so_cccd/capnhat', congDanController.capNhatThongTin);
-router.put('/congdan/:so_cccd/xuly-cccd', congDanController.xuLyLamLaiMat);
-router.get('/congdan/timkiem', congDanController.timKiemCongDan);
-router.get('/congdan/thongke', congDanController.thongKeDanCu);
+router.get('/congdan', congDanController.getAllCongDan);
+router.post('/congdan', congDanController.createCongDan);
+router.get('/congdan/search', congDanController.searchCongDan);
+router.get('/congdan/:id', congDanController.getCongDanById);
+router.put('/congdan/:id', congDanController.updateCongDan);
+router.delete('/congdan/:id', congDanController.deleteCongDan);
 
-// Kết hôn
-router.post('/kethon/dangky', ketHonController.dangKyKetHon);
-router.get('/kethon/:so_cccd', ketHonController.xemTinhTrangHonNhan);
-router.put('/kethon/lyhon', ketHonController.lyHon);
-router.get('/kethon/timkiem', ketHonController.timKiemKetHon);
+// Thống kê
+router.get('/thongke/gioitinh', congDanController.thongKeTheoGioiTinh);
+router.get('/thongke/dothuoi', congDanController.thongKeTheoDoTuoi);
+router.get('/thongke/honnhan', congDanController.thongKeTheoTinhTrangHonNhan);
 
-// Xe
-router.post('/xe/dangky', xeController.dangKyXe);
-router.get('/xe/chuxe/:so_cccd_chu_xe', xeController.traCuuXeTheoChuXe);
-router.get('/xe/bien/:bien_so', xeController.traCuuXeTheoBienSo);
-
-// Trú
-router.post('/tru/dangky', truController.dangKyTru);
-router.get('/tru/:so_cccd', truController.traCuuTru);
-
-// Giấy khai sinh/chứng tử
-router.post('/giay/khaisinh', giayToController.dangKyKhaiSinh);
-router.post('/giay/chungtu', giayToController.dangKyChungTu);
-router.get('/giay/khaisinh/:so_giay', giayToController.xemKhaiSinh);
-router.get('/giay/chungtu/:so_giay', giayToController.xemChungTu);
+// Tài khoản
+router.post('/taikhoan/login', taiKhoanController.login);
 
 // Hộ khẩu
-router.post('/hokhau/dangky', hoKhauController.dangKyHoKhau);
-router.get('/hokhau/:so_ho_khau', hoKhauController.xemHoKhau);
-router.put('/hokhau/:so_ho_khau/capnhat', hoKhauController.capNhatHoKhau);
+router.get('/hokhau', hoKhauController.getAllHoKhau);
+router.post('/hokhau', hoKhauController.dangKyHoKhau);
+router.put('/hokhau/:sohokhau', hoKhauController.capNhatHoKhau);
+
+// Tạm trú, Tạm vắng
+router.get('/tru/tamtru', truController.getAllTamTru);
+router.get('/tru/tamvang', truController.getAllTamVang);
+router.post('/tru', truController.dangKyTru);
+router.get('/tru/tracuu/:cccd', truController.traCuuTru);
+
+// Xe
+router.get('/xe', xeController.getAllXe);
+router.post('/xe', xeController.dangKyXe);
+router.get('/xe/tracuu/:bienso', xeController.traCuuXeTheoBienSo);
+// Giấy tờ
+router.get('/giayto/khaisinh', giayToController.getAllKhaiSinh);
+router.get('/giayto/chungtu', giayToController.getAllChungTu);
+router.post('/giayto/chungtu', giayToController.dangKyChungTu);
+
+// Hôn nhân & Gia đình
+router.get('/kethon', ketHonController.getAllKetHon);
+router.post('/kethon', ketHonController.createKetHon);
+router.post('/lyhon', lyHonController.createLyHon);
+router.post('/khaisinh', khaiSinhController.createKhaiSinh);
 
 module.exports = router;

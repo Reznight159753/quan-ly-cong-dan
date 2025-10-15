@@ -1,21 +1,18 @@
 const cassandra = require('cassandra-driver');
 require('dotenv').config();
 
-const authProvider = new cassandra.auth.PlainTextAuthProvider(
-  process.env.CASSANDRA_USERNAME,
-  process.env.CASSANDRA_PASSWORD
-);
-
 const client = new cassandra.Client({
-  contactPoints: [process.env.CASSANDRA_CONTACT_POINTS],
-  localDataCenter: process.env.CASSANDRA_DATACENTER,
-  keyspace: process.env.CASSANDRA_KEYSPACE,
-  authProvider: authProvider,
-  protocolOptions: { port: parseInt(process.env.CASSANDRA_PORT) }
+  contactPoints: [process.env.DB_CONTACT_POINTS || '127.0.0.1'],
+  localDataCenter: process.env.DB_LOCAL_DATA_CENTER || 'datacenter1',
+  keyspace: process.env.DB_KEYSPACE || 'quan_ly_cong_dan',
 });
 
-client.connect()
-  .then(() => console.log('Connected to Cassandra'))
-  .catch(err => console.error('Error connecting to Cassandra:', err));
+client.connect(err => {
+  if (err) {
+    console.error('Lỗi kết nối Cassandra:', err);
+  } else {
+    console.log('Đã kết nối thành công đến Cassandra.');
+  }
+});
 
-module.exports = client;
+module.exports = { client };

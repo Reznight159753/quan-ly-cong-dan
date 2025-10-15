@@ -1,28 +1,43 @@
-const client = require('../config/database');
+const { client } = require('../config/database');
 
-exports.dangKyTru = async (req, res) => {
-  const { SO_CCCD, LOAI_TRU, NOI_TRU, TU_NGAY, DEN_NGAY, TINH, TRANG_THAI = 'HOAT_DONG' } = req.body;
-  const query = 'INSERT INTO TRU (SO_CCCD, LOAI_TRU, NOI_TRU, TU_NGAY, DEN_NGAY, TINH, TRANG_THAI) VALUES (?, ?, ?, ?, ?, ?, ?)';
-  try {
-    await client.execute(query, [SO_CCCD, LOAI_TRU, NOI_TRU, TU_NGAY, DEN_NGAY || null, TINH, TRANG_THAI]);
-    res.status(201).json({ message: 'Đăng ký trú thành công' });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
+const getAllTamTru = async (req, res) => {
+    try {
+        const result = await client.execute("SELECT * FROM tru WHERE loai_tru = 'TAM_TRU' ALLOW FILTERING");
+        res.json(result.rows);
+    } catch (error) {
+        res.status(500).json({ message: 'Lỗi hệ thống', error: error.message });
+    }
 };
 
-exports.traCuuTru = async (req, res) => {
-  const { so_cccd } = req.params;
-  const { tinh, trang_thai } = req.query;
-  let query = 'SELECT * FROM TRU WHERE SO_CCCD = ?';
-  const params = [so_cccd];
-  if (tinh) { query += ' AND TINH = ?'; params.push(tinh); }
-  if (trang_thai) { query += ' AND TRANG_THAI = ?'; params.push(trang_thai); }
-  query += ' ALLOW FILTERING';
-  try {
-    const result = await client.execute(query, params);
-    res.json(result.rows);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
+const getAllTamVang = async (req, res) => {
+    try {
+        const result = await client.execute("SELECT * FROM tru WHERE loai_tru = 'TAM_VANG' ALLOW FILTERING");
+        res.json(result.rows);
+    } catch (error) {
+        res.status(500).json({ message: 'Lỗi hệ thống', error: error.message });
+    }
 };
+
+const dangKyTru = async (req, res) => {
+    const { SO_CCCD, LOAI_TRU, NOI_TRU, TU_NGAY, DEN_NGAY, TINH, TRANG_THAI } = req.body;
+    try {
+        const query = 'INSERT INTO tru (so_cccd, loai_tru, noi_tru, tu_ngay, den_ngay, tinh, trang_thai) VALUES (?, ?, ?, ?, ?, ?, ?)';
+        await client.execute(query, [SO_CCCD, LOAI_TRU, NOI_TRU, TU_NGAY, DEN_NGAY || null, TINH, TRANG_THAI], { prepare: true });
+        res.status(201).json({ message: 'Đăng ký cư trú thành công' });
+    } catch (error) {
+        res.status(500).json({ message: 'Lỗi hệ thống', error: error.message });
+    }
+};
+
+const traCuuTru = async (req, res) => {
+    const { cccd } = req.params;
+    try {
+        const query = 'SELECT * FROM tru WHERE so_cccd = ?';
+        const result = await client.execute(query, [cccd], { prepare: true });
+        res.json(result.rows);
+    } catch (error) {
+        res.status(500).json({ message: 'Lỗi hệ thống', error: error.message });
+    }
+};
+
+module.exports = { getAllTamTru, getAllTamVang, dangKyTru, traCuuTru };
