@@ -15,11 +15,13 @@ import QuanLyHoKhau from './components/QuanLyHoKhau';
 import QuanLyCuTru from './components/QuanLyCuTru';
 import QuanLyXe from './components/QuanLyXe';
 import QuanLyGiayTo from './components/QuanLyGiayTo';
-
+import DieuTraLyLich from './components/DieuTraLyLich';
+import Header from './components/Header';
 
 function App() {
   return (
     <Router>
+      <Header />
       <div className="app-container">
         <Sidebar />
         <main className="main-content">
@@ -37,6 +39,7 @@ function App() {
             <Route path="/quan-ly-cu-tru" element={<QuanLyCuTru />} />
             <Route path="/quan-ly-xe" element={<QuanLyXe />} />
             <Route path="/quan-ly-giay-to" element={<QuanLyGiayTo />} />
+            <Route path="/dieu-tra-ly-lich" element={<DieuTraLyLich />} />
           </Routes>
         </main>
       </div>

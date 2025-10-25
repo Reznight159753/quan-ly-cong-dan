@@ -12,6 +12,9 @@ function Sidebar() {
         <li>
           <NavLink to="/thong-ke">Thống kê</NavLink>
         </li>
+        <li>
+          <NavLink to="/dieu-tra-ly-lich">Điều tra thông tin</NavLink>
+        </li>
         <hr style={{ borderColor: '#34495e' }}/>
         <li>
           <NavLink to="/quan-ly-cong-dan">Quản lý Công dân</NavLink>
